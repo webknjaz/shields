@@ -8,7 +8,7 @@ You will need Node 8 or later, which you can install using a
 On Ubuntu / Debian:
 
 ```sh
-curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -; sudo apt-get install -y nodejs
+curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -; sudo apt-get install -y nodejs
 ```
 
 ```sh
@@ -78,7 +78,7 @@ $ docker run --rm -p 8080:80 --name shields shields
 # or if you have shields.env file, run the following instead
 $ docker run --rm -p 8080:80 --env-file shields.env --name shields shields
 
-> gh-badges@1.1.2 start /usr/src/app
+> badge-maker@3.0.0 start /usr/src/app
 > node server.js
 
 http://[::1]/

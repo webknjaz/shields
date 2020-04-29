@@ -3,7 +3,7 @@
 const { expect } = require('chai')
 const sinon = require('sinon')
 const Joi = require('@hapi/joi')
-const makeBadge = require('../../gh-badges/lib/make-badge')
+const makeBadge = require('../../badge-maker/lib/make-badge')
 const BaseSvgScrapingService = require('./base-svg-scraping')
 
 function makeExampleSvg({ label, message }) {
@@ -68,7 +68,9 @@ describe('BaseSvgScrapingService', function() {
 
       expect(sendAndCacheRequest).to.have.been.calledOnceWith(
         'http://example.com/foo.svg',
-        { headers: { Accept: 'image/svg+xml' } }
+        {
+          headers: { Accept: 'image/svg+xml' },
+        }
       )
     })
 

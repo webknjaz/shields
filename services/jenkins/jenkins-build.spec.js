@@ -63,7 +63,19 @@ describe('JenkinsBuild', function() {
 
     const user = 'admin'
     const pass = 'password'
-    const config = { private: { jenkins_user: user, jenkins_pass: pass } }
+    const config = {
+      public: {
+        services: {
+          jenkins: {
+            authorizedOrigins: ['https://jenkins.ubuntu.com'],
+          },
+        },
+      },
+      private: {
+        jenkins_user: user,
+        jenkins_pass: pass,
+      },
+    }
 
     it('sends the auth information as configured', async function() {
       const scope = nock('https://jenkins.ubuntu.com')
@@ -74,11 +86,15 @@ describe('JenkinsBuild', function() {
         .reply(200, { color: 'blue' })
 
       expect(
-        await JenkinsBuild.invoke(defaultContext, config, {
-          protocol: 'https',
-          host: 'jenkins.ubuntu.com',
-          job: 'server/job/curtin-vmtest-daily-x',
-        })
+        await JenkinsBuild.invoke(
+          defaultContext,
+          config,
+          {},
+          {
+            jobUrl:
+              'https://jenkins.ubuntu.com/server/job/curtin-vmtest-daily-x',
+          }
+        )
       ).to.deep.equal({
         label: undefined,
         message: 'passing',

@@ -15,9 +15,9 @@ describe('coalesceBadge', function() {
 
     // This behavior isn't great and we might want to remove it.
     it('uses the category as a default label', function() {
-      expect(coalesceBadge({}, {}, {}, { category: 'cat' }).text).to.deep.equal(
-        ['cat', 'n/a']
-      )
+      expect(
+        coalesceBadge({}, {}, {}, { category: 'cat' }).text
+      ).to.deep.equal(['cat', 'n/a'])
     })
 
     it('preserves an empty label', function() {
@@ -278,8 +278,21 @@ describe('coalesceBadge', function() {
   })
 
   describe('Style', function() {
-    it('overrides the template', function() {
-      expect(coalesceBadge({ style: 'pill' }, {}, {}).template).to.equal('pill')
+    it('falls back to flat with invalid style', function() {
+      expect(coalesceBadge({ style: 'pill' }, {}, {}).template).to.equal('flat')
+      expect(coalesceBadge({ style: 7 }, {}, {}).template).to.equal('flat')
+      expect(coalesceBadge({ style: undefined }, {}, {}).template).to.equal(
+        'flat'
+      )
+    })
+
+    it('replaces legacy popout styles', function() {
+      expect(coalesceBadge({ style: 'popout' }, {}, {}).template).to.equal(
+        'flat'
+      )
+      expect(
+        coalesceBadge({ style: 'popout-square' }, {}, {}).template
+      ).to.equal('flat-square')
     })
   })
 

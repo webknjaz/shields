@@ -25,6 +25,10 @@ const packageDataSchema = Joi.object({
     .items(Joi.object({}))
     .required(),
   types: Joi.string(),
+  // `typings` is an alias for `types` and often used
+  // https://www.typescriptlang.org/docs/handbook/declaration-files/publishing.html#including-declarations-in-your-npm-package
+  // > Note that the "typings" field is synonymous with "types"
+  typings: Joi.string(),
   files: Joi.array()
     .items(Joi.string())
     .default([]),
@@ -38,7 +42,7 @@ const queryParamSchema = Joi.object({
 // of a package.
 module.exports = class NpmBase extends BaseJsonService {
   static get auth() {
-    return { passKey: 'npm_token' }
+    return { passKey: 'npm_token', serviceKey: 'npm' }
   }
 
   static buildRoute(base, { withTag } = {}) {
@@ -77,27 +81,32 @@ module.exports = class NpmBase extends BaseJsonService {
   }
 
   async _requestJson(data) {
-    return super._requestJson({
-      ...data,
-      options: {
-        headers: {
-          // Use a custom Accept header because of this bug:
-          // <https://github.com/npm/npmjs.org/issues/163>
-          Accept: '*/*',
-          ...this.authHelper.bearerAuthHeader,
+    return super._requestJson(
+      this.authHelper.withBearerAuthHeader({
+        ...data,
+        options: {
+          headers: {
+            // Use a custom Accept header because of this bug:
+            // <https://github.com/npm/npmjs.org/issues/163>
+            Accept: '*/*',
+          },
         },
-      },
-    })
+      })
+    )
   }
 
   async fetchPackageData({ registryUrl, scope, packageName, tag }) {
     registryUrl = registryUrl || this.constructor.defaultRegistryUrl
     let url
-    if (scope === undefined) {
+    if (scope === undefined && tag === undefined) {
       // e.g. https://registry.npmjs.org/express/latest
       // Use this endpoint as an optimization. It covers the vast majority of
       // these badges, and the response is smaller.
       url = `${registryUrl}/${packageName}/latest`
+    } else if (scope === undefined && tag !== undefined) {
+      // e.g. https://registry.npmjs.org/express
+      // because https://registry.npmjs.org/express/canary does not work
+      url = `${registryUrl}/${packageName}`
     } else {
       // e.g. https://registry.npmjs.org/@cedx%2Fgulp-david
       // because https://registry.npmjs.org/@cedx%2Fgulp-david/latest does not work
@@ -115,7 +124,7 @@ module.exports = class NpmBase extends BaseJsonService {
     })
 
     let packageData
-    if (scope === undefined) {
+    if (scope === undefined && tag === undefined) {
       packageData = json
     } else {
       const registryTag = tag || 'latest'

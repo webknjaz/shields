@@ -44,7 +44,7 @@ function QueryParam({
 }: {
   snippet: string
   documentation: JSX.Element | JSX.Element[]
-}) {
+}): JSX.Element {
   return (
     <tr>
       <QueryParamSyntax>
@@ -61,7 +61,7 @@ function EscapingConversion({
 }: {
   lhs: JSX.Element
   rhs: JSX.Element
-}) {
+}): JSX.Element {
   return (
     <tr>
       <Lhs>{lhs}</Lhs>
@@ -77,7 +77,7 @@ function ColorExamples({
 }: {
   baseUrl: string
   colors: string[]
-}) {
+}): JSX.Element {
   return (
     <span>
       {colors.map((color, i) => (
@@ -91,7 +91,7 @@ function ColorExamples({
   )
 }
 
-function StyleExamples({ baseUrl }: { baseUrl: string }) {
+function StyleExamples({ baseUrl }: { baseUrl: string }): JSX.Element {
   return (
     <QueryParamTable>
       <tbody>
@@ -118,7 +118,7 @@ function StyleExamples({ baseUrl }: { baseUrl: string }) {
   )
 }
 
-function NamedLogos() {
+function NamedLogos(): JSX.Element {
   const renderLogo = (logo: string): JSX.Element => (
     <LogoName key={logo}>{logo}</LogoName>
   )
@@ -132,7 +132,7 @@ function NamedLogos() {
   return <>{result}</>
 }
 
-function StaticBadgeEscapingRules() {
+function StaticBadgeEscapingRules(): JSX.Element {
   return (
     <EscapingRuleTable>
       <tbody>
@@ -180,7 +180,7 @@ function StaticBadgeEscapingRules() {
   )
 }
 
-export default function Usage({ baseUrl }: { baseUrl: string }) {
+export default function Usage({ baseUrl }: { baseUrl: string }): JSX.Element {
   return (
     <section>
       <H2 id="your-badge">Your Badge</H2>
@@ -345,7 +345,15 @@ export default function Usage({ baseUrl }: { baseUrl: string }) {
             snippet="?logo=appveyor"
           />
           <QueryParam
-            documentation={<span>Insert custom logo image (≥ 14px high)</span>}
+            documentation={
+              <span>
+                Insert custom logo image (≥ 14px high). There is a limit on the
+                total size of request headers we can accept (8192 bytes). From a
+                practical perspective, this means the base64-encoded image text
+                is limited to somewhere slightly under 8192 bytes depending on
+                the rest of the request header.
+              </span>
+            }
             key="logoSvg"
             snippet="?logo=data:image/png;base64,…"
           />
@@ -353,7 +361,8 @@ export default function Usage({ baseUrl }: { baseUrl: string }) {
             documentation={
               <span>
                 Set the color of the logo (hex, rgb, rgba, hsl, hsla and css
-                named colors supported)
+                named colors supported). Supported for named logos but not for
+                custom logos.
               </span>
             }
             key="logoColor"

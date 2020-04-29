@@ -1,12 +1,16 @@
 'use strict'
 
 const Joi = require('@hapi/joi')
+const { nonNegativeInteger } = require('../validators')
 const { BaseJsonService } = require('..')
 
 const discordSchema = Joi.object({
-  members: Joi.array()
-    .allow(null)
-    .required(),
+  presence_count: nonNegativeInteger,
+}).required()
+
+const proxySchema = Joi.object({
+  message: Joi.string().required(),
+  color: Joi.string().required(),
 }).required()
 
 const documentation = `
@@ -63,6 +67,11 @@ module.exports = class Discord extends BaseJsonService {
     }
   }
 
+  constructor(context, config) {
+    super(context, config)
+    this._shieldsProductionHerokuHacks = config.shieldsProductionHerokuHacks
+  }
+
   async fetch({ serverId }) {
     const url = `https://discordapp.com/api/guilds/${serverId}/widget.json`
     return this._requestJson({
@@ -75,9 +84,20 @@ module.exports = class Discord extends BaseJsonService {
     })
   }
 
+  async fetchOvhProxy({ serverId }) {
+    return this._requestJson({
+      url: `https://legacy-img.shields.io/discord/${serverId}.json`,
+      schema: proxySchema,
+    })
+  }
+
   async handle({ serverId }) {
+    if (this._shieldsProductionHerokuHacks) {
+      const { message, color } = await this.fetchOvhProxy({ serverId })
+      return { message, color }
+    }
+
     const data = await this.fetch({ serverId })
-    const members = Array.isArray(data.members) ? data.members : []
-    return this.constructor.render({ members: members.length })
+    return this.constructor.render({ members: data.presence_count })
   }
 }

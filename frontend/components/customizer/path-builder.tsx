@@ -1,6 +1,6 @@
 import React, { useState, useEffect, ChangeEvent } from 'react'
 import styled, { css } from 'styled-components'
-import pathToRegexp, { Token, Key } from 'path-to-regexp'
+import { Token, Key, parse } from 'path-to-regexp'
 import humanizeString from 'humanize-string'
 import { patternToOptions } from '../../lib/pattern-helpers'
 import { noAutocorrect, StyledInput } from '../common'
@@ -11,11 +11,13 @@ import {
 } from './builder-common'
 
 interface PathBuilderColumnProps {
+  pathContainsOnlyLiterals: boolean
   withHorizPadding?: boolean
 }
 
 const PathBuilderColumn = styled.span<PathBuilderColumnProps>`
-  height: 78px;
+  height: ${({ pathContainsOnlyLiterals }) =>
+    pathContainsOnlyLiterals ? '18px' : '78px'};
 
   float: left;
   display: flex;
@@ -32,10 +34,12 @@ const PathBuilderColumn = styled.span<PathBuilderColumnProps>`
 
 interface PathLiteralProps {
   isFirstToken: boolean
+  pathContainsOnlyLiterals: boolean
 }
 
 const PathLiteral = styled.div<PathLiteralProps>`
-  margin-top: 39px;
+  margin-top: ${({ pathContainsOnlyLiterals }) =>
+    pathContainsOnlyLiterals ? '0px' : '39px'};
   ${({ isFirstToken }) =>
     isFirstToken &&
     css`
@@ -80,17 +84,17 @@ export function constructPath({
 }: {
   tokens: Token[]
   namedParams: { [k: string]: string }
-}) {
+}): { path: string; isComplete: boolean } {
   let isComplete = true
   const path = tokens
     .map(token => {
       if (typeof token === 'string') {
-        return token
+        return token.trim()
       } else {
         const { delimiter, name, optional } = token
         const value = namedParams[name]
         if (value) {
-          return `${delimiter}${value}`
+          return `${delimiter}${value.trim()}`
         } else if (optional) {
           return ''
         } else {
@@ -119,8 +123,8 @@ export default function PathBuilder({
     isComplete: boolean
   }) => void
   isPrefilled: boolean
-}) {
-  const [tokens] = useState(() => pathToRegexp.parse(pattern))
+}): JSX.Element {
+  const [tokens] = useState(() => parse(pattern))
   const [namedParams, setNamedParams] = useState(() =>
     isPrefilled
       ? exampleParams
@@ -130,13 +134,10 @@ export default function PathBuilder({
         tokens
           .filter(t => typeof t !== 'string')
           .map(t => t as Key)
-          .reduce(
-            (accum, { name }) => {
-              accum[name] = ''
-              return accum
-            },
-            {} as { [k: string]: string }
-          )
+          .reduce((accum, { name }) => {
+            accum[name] = ''
+            return accum
+          }, {} as { [k: string]: string })
   )
 
   useEffect(() => {
@@ -149,22 +150,34 @@ export default function PathBuilder({
 
   function handleTokenChange({
     target: { name, value },
-  }: ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
+  }: ChangeEvent<HTMLInputElement | HTMLSelectElement>): void {
     setNamedParams({
       ...namedParams,
       [name]: value,
     })
   }
 
-  function renderLiteral(literal: string, tokenIndex: number) {
+  function renderLiteral(
+    literal: string,
+    tokenIndex: number,
+    pathContainsOnlyLiterals: boolean
+  ): JSX.Element {
     return (
-      <PathBuilderColumn key={`${tokenIndex}-${literal}`}>
-        <PathLiteral isFirstToken={tokenIndex === 0}>{literal}</PathLiteral>
+      <PathBuilderColumn
+        key={`${tokenIndex}-${literal}`}
+        pathContainsOnlyLiterals={pathContainsOnlyLiterals}
+      >
+        <PathLiteral
+          isFirstToken={tokenIndex === 0}
+          pathContainsOnlyLiterals={pathContainsOnlyLiterals}
+        >
+          {literal}
+        </PathLiteral>
       </PathBuilderColumn>
     )
   }
 
-  function renderNamedParamInput(token: Key) {
+  function renderNamedParamInput(token: Key): JSX.Element {
     const { pattern } = token
     const name = `${token.name}`
     const options = patternToOptions(pattern)
@@ -206,7 +219,7 @@ export default function PathBuilder({
     token: Key,
     tokenIndex: number,
     namedParamIndex: number
-  ) {
+  ): JSX.Element {
     const { delimiter, optional } = token
     const name = `${token.name}`
 
@@ -214,8 +227,8 @@ export default function PathBuilder({
 
     return (
       <React.Fragment key={token.name}>
-        {renderLiteral(delimiter, tokenIndex)}
-        <PathBuilderColumn withHorizPadding>
+        {renderLiteral(delimiter, tokenIndex, false)}
+        <PathBuilderColumn pathContainsOnlyLiterals={false} withHorizPadding>
           <NamedParamLabelContainer>
             <BuilderLabel htmlFor={name}>{humanizeString(name)}</BuilderLabel>
             {optional ? <BuilderLabel>(optional)</BuilderLabel> : null}
@@ -232,11 +245,14 @@ export default function PathBuilder({
   }
 
   let namedParamIndex = 0
+  const pathContainsOnlyLiterals = tokens.every(
+    token => typeof token === 'string'
+  )
   return (
     <BuilderContainer>
       {tokens.map((token, tokenIndex) =>
         typeof token === 'string'
-          ? renderLiteral(token, tokenIndex)
+          ? renderLiteral(token, tokenIndex, pathContainsOnlyLiterals)
           : renderNamedParam(token, tokenIndex, namedParamIndex++)
       )}
     </BuilderContainer>
