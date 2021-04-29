@@ -1,0 +1,36 @@
+version: 2
+updates:
+- package-ecosystem: npm
+  directory: "/"
+  schedule:
+    interval: weekly
+    time: "03:00"
+  open-pull-requests-limit: 10
+  ignore:
+  - dependency-name: y18n
+    versions:
+    - 4.0.1
+  - dependency-name: react-error-overlay
+    versions:
+    - 6.0.8
+  - dependency-name: elliptic
+    versions:
+    - 6.5.3
+  - dependency-name: prettier
+    versions:
+    - 2.0.5
+  - dependency-name: "@types/styled-components"
+    versions:
+    - 5.1.0
+  - dependency-name: path-to-regexp
+    versions:
+    - 6.1.0
+  - dependency-name: prom-client
+    versions:
+    - 12.0.0
+- package-ecosystem: npm
+  directory: "/badge-maker"
+  schedule:
+    interval: weekly
+    time: "03:00"
+  open-pull-requests-limit: 10
